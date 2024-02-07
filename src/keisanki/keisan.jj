@@ -1,0 +1,53 @@
+options {
+   STATIC = false;
+}
+PARSER_BEGIN(Parser)
+package keisanki;
+import java.io.*;
+import java.awt.event.*;
+
+class Parser {
+      private ActionListener listener;
+      public void setActionListener(ActionListener a){
+          listener = a;
+      }
+      private void output(double value){
+          listener.actionPerformed(
+               new ActionEvent(this,
+                               ActionEvent.ACTION_PERFORMED,
+                               String.valueOf(value)));
+      }
+      
+}
+PARSER_END(Parser)
+TOKEN : {
+<NUM : (["0"-"9"](["0"-"9"])*( "." (["0"-"9"])* )? )>
+    | <PLUSOP : "+" > 
+    | <MINUS : "-" >
+    | <MULTIPLY : "*" > 
+    | <DIVIDE : "/" >
+    | <CLEAR : "C" >
+    | <EQOP : "=" >
+}
+SKIP : {
+    " " | "\n" | "\r"
+}
+public void start() :
+{
+    Token token;
+    double num;
+}
+{
+    (token=<NUM> {num = Double.parseDouble(token.image);
+                 output(num);
+                }
+               
+    ( <PLUSOP> token=<NUM> {num += Double.parseDouble(token.image);
+                            output(num);
+       }
+        | <MINUS> token=<NUM> { num -= Double.parseDouble(token.image); output(num);}
+            | <MULTIPLY> token=<NUM> { num *= Double.parseDouble(token.image); output(num);}
+            | <DIVIDE> token=<NUM> {num /= Double.parseDouble(token.image);output(num);}
+     )*
+     <EQOP> )*
+}

@@ -1,0 +1,130 @@
+/**
+ * Simple calculator JJTree file
+ */
+options
+{
+  STATIC = false; // parserクラスのメソッドをstaticにしない
+  MULTI = true; // ASTXXXクラスを生成する
+  VISITOR = true; // Visitorクラスを生成する
+  UNICODE_INPUT = false; // ユニコードで解析を行わない（日本語等を使わない）
+}
+
+PARSER_BEGIN(SimpleCalculatorParser)
+package rei;
+import java.util.List;
+import java.util.ArrayList;
+
+public class SimpleCalculatorParser
+{
+  public static void main(String [] args)
+  {
+    System.out.println(SimpleCalculatorParser.eval(System.in));
+  }
+
+  public static double eval(java.io.InputStream in)
+  {
+    SimpleCalculatorParser parser = new SimpleCalculatorParser(in);
+
+    double x = 0.0;
+    SimpleCalculatorParserVisitor visitor = new SimpleCalculatorParserVisitorImpl();
+    try {
+        x = (double) parser.Root().jjtAccept(visitor, null);
+    } catch (ParseException e) {
+        e.printStackTrace();
+    }
+    return x;
+  }
+}
+PARSER_END(SimpleCalculatorParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+}
+
+TOKEN :
+{
+  < ADD_OP :
+    "+"
+  | "-" >
+| < MUL_OP :
+    "*"
+  | "/"
+  | "%" >
+| < OPEN_BRACKET : "(" >
+| < CLOSE_BRACKET : ")" >
+| < DECIMAL :
+    (< DIGIT >)+
+    (
+      "." (< DIGIT >)+
+    )? >
+| < DIGIT : [ "0"-"9" ] >
+}
+
+SimpleNode Root() :
+{}
+{
+  Expr() "\n"
+  {
+    return jjtThis;
+  }
+}
+
+void Expr() :
+{}
+{
+  AddExpr()
+}
+
+void AddExpr() :
+{
+  List tokens = new ArrayList();
+  Token t = null;
+}
+{
+  MulExpr()
+  (
+    t = < ADD_OP > 
+    MulExpr() { tokens.add(t); }
+  )*
+  {
+    jjtThis.jjtSetValue(tokens);
+  }
+}
+
+void MulExpr() :
+{
+  List tokens = new ArrayList();
+  Token t = null;
+}
+{
+  UnaryExpr()
+  (
+    t = < MUL_OP > 
+    UnaryExpr() { tokens.add(t); }
+  )*
+  {
+    jjtThis.jjtSetValue(tokens);
+  }
+}
+
+void UnaryExpr() :
+{}
+{
+  < OPEN_BRACKET >  Expr() < CLOSE_BRACKET >
+| Decimal()
+}
+
+void Decimal() :
+{
+  Token t = null;
+}
+{
+  t = < DECIMAL >
+  {
+    jjtThis.jjtSetValue(t);
+  }
+}
+

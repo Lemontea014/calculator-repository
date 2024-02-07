@@ -1,0 +1,65 @@
+options {
+   STATIC = false;
+}
+PARSER_BEGIN(Parser)
+package sakamoto;
+import java.io.*;
+import java.awt.event.*;
+class Parser {
+      private ActionListener listener;
+      public void setActionListener(ActionListener a){
+          listener = a;
+      }
+      private void output(double value){
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+     listener.actionPerformed(
+               new ActionEvent(this,
+                               ActionEvent.ACTION_PERFORMED,
+                               "error"));
+                               }else {
+          listener.actionPerformed(
+               new ActionEvent(this,
+                               ActionEvent.ACTION_PERFORMED,
+                               String.valueOf(value)));
+                               }
+      }
+
+    }
+PARSER_END(Parser)
+TOKEN : {
+    <NUM : (["0"-"9"](["0"-"9"])*( "." (["0"-"9"])* )? )>
+    | <PLUS : "+" > 
+    | <MINUS : "-" >
+    | <MULTIPLY : "*" > 
+    | <DIVIDE : "/" >
+    | <CLEAR : "C" >
+    | <EQ : "=" >
+    | < ERROR:~ [] >
+}
+public void start():
+
+{
+    Token token;
+    double num = 0;
+}
+{
+    try {
+        ((token=<NUM> {num = Double.parseDouble(token.image); output(num);})?
+        (
+            ( <PLUS> token=<NUM> {num += Double.parseDouble(token.image); output(num);}
+            | <MINUS> token=<NUM> { num -= Double.parseDouble(token.image); output(num);}
+            | <MULTIPLY> token=<NUM> { num *= Double.parseDouble(token.image); output(num);}
+            | <CLEAR> { output(0); start(); }
+            | <DIVIDE> token=<NUM> {num /= Double.parseDouble(token.image);output(num);}
+            | <ERROR >{ output(0); start(); }
+        )
+        )*
+        <EQ>
+        )*
+    } catch (ParseException e) {
+        output(0);
+        start();
+    }
+}
+
+
